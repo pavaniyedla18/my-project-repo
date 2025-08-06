@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Leaking Detection - Secure Login</title>
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        color: #000;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        margin: 0;
+        overflow-y: auto;
+    }
+    .container {
+        background-color: rgba(255, 255, 255, 0.97);
+        padding: 50px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        text-align: center;
+        max-width: 700px;
+        width: 90%;
+        margin: 40px auto;
+    }
+    h1 {
+        font-size: 42px;
+        margin-bottom: 10px;
+        color: #222;
+    }
+    .big-caption {
+        font-size: 18px;
+        color: #555;
+        margin-bottom: 20px;
+    }
+    .instructions {
+        background-color: #f7f7f7;
+        padding: 20px;
+        border-radius: 12px;
+        margin: 20px 0;
+        text-align: left;
+        font-size: 16px;
+        color: #333;
+        border-left: 5px solid #00baff;
+    }
+    .btn-primary {
+        background-color: #2575fc;
+        color: #fff;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 18px;
+        margin-top: 20px;
+        transition: background-color 0.3s ease;
+    }
+    .btn-primary:hover {
+        background-color: #1e5ed7;
+    }
+    .hidden {
+        display: none;
+    }
+    input[type="file"], input[type="text"], input[type="password"], textarea {
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 8px;
+        width: 80%;
+        border: 1px solid #ccc;
+    }
+    .result {
+        margin-top: 25px;
+        font-size: 20px;
+        font-weight: bold;
+        word-wrap: break-word;
+    }
+    .safe {
+        color: green;
+    }
+    .warning {
+        color: red;
+    }
+    .note {
+        font-size: 14px;
+        color: #555;
+        margin-top: 10px;
+    }
+    .stars {
+        display: flex;
+        justify-content: center;
+        margin: 15px 0;
+    }
+    .stars span {
+        font-size: 30px;
+        cursor: pointer;
+        color: gray;
+        transition: color 0.3s ease;
+    }
+    .stars span.selected {
+        color: gold;
+    }
+    .thankyou-message {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #008000;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+
+<div class="container" id="loginSection">
+    <h1>Secure Login</h1>
+    <p class="big-caption">Only authorized users can scan files for potential data leaks.</p>
+    <input type="text" id="username" placeholder="Enter your name"><br>
+    <input type="password" id="password" placeholder="Enter your password"><br>
+    <button class="btn-primary" onclick="login()">Login</button>
+</div>
+
+<div class="container hidden" id="mainSection">
+    <h1>Data Leaking Detection</h1>
+    <p class="big-caption">"In today's digital era, every click matters. Protect your privacy and avoid hidden data leaks from suspicious files and links."</p>
+
+    <div class="instructions">
+        <p>⚠ Technology has made everything digital - communication, banking, education. But with it, hackers are creating fake links, phishing attacks, and viruses to steal your data.</p>
+        <p>✔ Never download unknown files.</p>
+        <p>✔ Don't share personal information with strangers.</p>
+        <p>✔ Check files before opening to avoid data leaks.</p>
+        <p>🔒 Your privacy is your responsibility. Stay aware. Stay safe.</p>
+    </div>
+
+    <button class="btn-primary" onclick="showFileUpload()">🔍 Check Your Privacy Now</button>
+
+    <div id="fileSection" class="hidden">
+        <input type="file" id="fileInput"><br><br>
+        <button class="btn-primary" onclick="scanFile()">Scan Selected File</button>
+        <div id="result" class="result"></div>
+        <p class="note">* You can upload any file type - text, image, video, HTML, etc. System will inspect for risky patterns.</p>
+    </div>
+
+    <div id="reviewSection" class="hidden">
+        <h2>⭐ Your Feedback Matters</h2>
+        <div class="stars" id="starContainer">
+            <span onclick="setRating(1)">★</span>
+            <span onclick="setRating(2)">★</span>
+            <span onclick="setRating(3)">★</span>
+            <span onclick="setRating(4)">★</span>
+            <span onclick="setRating(5)">★</span>
+        </div>
+        <textarea id="reviewMessage" rows="4" placeholder="Write your feedback here..."></textarea><br>
+        <button class="btn-primary" onclick="submitReview()">Submit Review</button>
+        <div class="thankyou-message" id="thankYouMessage"></div>
+        <div id="reviewList" style="margin-top: 20px; text-align: left;"></div>
+    </div>
+</div>
+
+<script>
+let currentUser = "";
+let selectedRating = 0;
+const reviews = [];
+
+function login() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    if (username && password === '12345') {
+        currentUser = username;
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('mainSection').classList.remove('hidden');
+    } else {
+        alert("😞 Password is incorrect. Please try again.");
+    }
+}
+
+function showFileUpload() {
+    document.getElementById('fileSection').classList.remove('hidden');
+}
+
+function scanFile() {
+    const fileInput = document.getElementById('fileInput');
+    const result = document.getElementById('result');
+
+    if (!fileInput.files[0]) {
+        alert("📂 Please select a file to scan.");
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result.toLowerCase();
+        const suspiciousWords = ['phishing', 'malware', 'virus', 'http://', 'https://', 'trojan', 'spyware', 'hacked', 'attack', '@', '$', '#', '*', '.exe', '.apk'];
+        const isSuspicious = suspiciousWords.some(word => content.includes(word));
+
+        if (isSuspicious) {
+            result.innerHTML = "🚫 Your file is not safe. You might have to delete this.";
+            result.className = "result warning";
+        } else {
+            result.innerHTML = "✅ Your file is safe. You can continue without fear.";
+            result.className = "result safe";
+        }
+
+        document.getElementById('reviewSection').classList.remove('hidden');
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    };
+
+    reader.readAsText(file);
+}
+
+function setRating(stars) {
+    selectedRating = stars;
+    const starElements = document.getElementById('starContainer').children;
+    for (let i = 0; i < starElements.length; i++) {
+        starElements[i].classList.toggle('selected', i < stars);
+    }
+}
+
+function submitReview() {
+    const review = document.getElementById('reviewMessage').value.trim();
+    if (selectedRating === 0 || review === "") {
+        alert("⭐ Please rate and write your feedback.");
+        return;
+    }
+
+    const emoji = ['😞', '😐', '🙂', '😊', '🌟'][selectedRating - 1];
+    const newReview = {
+        name: currentUser,
+        stars: selectedRating,
+        emoji: emoji,
+        text: review,
+        time: new Date().toLocaleString()
+    };
+    reviews.push(newReview);
+
+    document.getElementById('thankYouMessage').innerHTML = `🎉 Thank you for visiting, ${currentUser}! You rated us ${selectedRating} star(s) ${emoji}.`;
+    document.getElementById('reviewMessage').value = '';
+    selectedRating = 0;
+
+    const starElements = document.getElementById('starContainer').children;
+    for (let i = 0; i < starElements.length; i++) {
+        starElements[i].classList.remove('selected');
+    }
+
+    renderReviews();
+    document.getElementById('reviewList').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderReviews() {
+    const reviewList = document.getElementById('reviewList');
+    reviewList.innerHTML = '<h3 style="color:#222;">🗣 Visitor Feedback</h3>';
+
+    reviews.slice().reverse().forEach(review => {
+        const stars = '★'.repeat(review.stars) + '☆'.repeat(5 - review.stars);
+        reviewList.innerHTML += `
+            <div style="background:#f0f9ff; padding: 12px 15px; border-radius: 10px; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <strong style="color:#444;">${stars} ${review.emoji}</strong><br>
+                <p style="margin: 5px 0; color:#333;">"${review.text}"</p>
+                <small style="color:#888;">👤 ${review.name} | 🕒 ${review.time}</small>
+            </div>
+        `;
+    });
+}
+</script>
+
+</body>
+</html>
